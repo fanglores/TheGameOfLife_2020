@@ -4,6 +4,10 @@
 #include <ctime>
 using namespace std;
 
+int N, G;
+vector<vector<bool>> cells(N, vector<bool>(N, false));
+
+
 bool get_next_state(int y, int x)
 {
   bool up,down,left,right;
@@ -13,34 +17,34 @@ bool get_next_state(int y, int x)
   else up = false;
   if (x == N - 1) down = true;
   else down = false;
-  if (y == 0) left = up
+  if (y == 0) left = true;
   else left = false;
   if (y == N - 1) right = true;
   else right = false;
 
   if(!up)
   {
-    cnt += int(cells[y - 1][x]);
-    if (!left) cnt += int(cells[y - 1][x - 1]);
-    if (!right) cnt += int(cells[y - 1][x + 1]);
+    neighbors += int(cells[y - 1][x]);
+    if (!left) neighbors += int(cells[y - 1][x - 1]);
+    if (!right) neighbors += int(cells[y - 1][x + 1]);
   }
   if(!down)
   {
-    cnt += int(cells[y + 1][x]);
-    if (!left) cnt += int(cells[y + 1][x - 1]);
-    if (!right) cnt += int(cells[y + 1][x + 1]);
+    neighbors += int(cells[y + 1][x]);
+    if (!left) neighbors += int(cells[y + 1][x - 1]);
+    if (!right) neighbors += int(cells[y + 1][x + 1]);
   }
-  if (!right) cnt += int(cells[y][x + 1]);
-  if (!left) cnt += int(cells[y][x - 1]);
+  if (!right) neighbors += int(cells[y][x + 1]);
+  if (!left) neighbors += int(cells[y][x - 1]);
 
   if(cells[y][x]) 
   {
-    if(cnt >= 2 && cnt <= 3) return true;    //alive cell keeps living
+    if(neighbors >= 2 && neighbors <= 3) return true;    //alive cell keeps living
     else return false;                       //alive cell dies
   }
   else 
   {
-    if(cnt == 3) return true;                 //dead cell resurrected
+    if(neighbors == 3) return true;                 //dead cell resurrected
     else return false;                        //dead cell is dead
   }
   
@@ -51,7 +55,7 @@ bool auto_init()
   int n, i, x, y;
   system("cls");
   srand(time(0));
-  cout << "********************AUTO_INIT"********************"\n\n;
+  cout << "********************AUTO_INIT********************\n\n";
   
   cout << "Enter number of cells to init (-1 for automatical generation):\n>>";
   cin >> n;
@@ -80,7 +84,7 @@ bool manual_init()
 {
   system("cls");
   int x, y;
-  cout << "********************MANUAL_INIT"********************"\n\n;
+  cout << "********************MANUAL_INIT********************\n\n";
     
   cout << "Enter line and column numbers (-1 -1 as end of input):\n>>";
   cin >> y >> x;
@@ -94,6 +98,17 @@ bool manual_init()
   
   cout << "\n\nInitialization successful!\n";
   return true;
+}
+
+void evolve()
+{
+  vector<vector<bool>> sub(N, vector<bool>(N));
+  
+  for(int i = 0; i < N; i++)
+    for(int j = 0; j < N; j++)
+      sub[i][j] = get_next_state(i, j);
+  
+  cells = sub;
 }
 
 bool menu()
@@ -128,9 +143,6 @@ void print()
 }
 
 
-int N, G;
-vector<vector<bool>> cells(N, vector<bool>(N, false));
-
 int main()
 {
   
@@ -141,7 +153,8 @@ int main()
     
     cout << "0 generation state:\n\n";
     print();
-
+  
+    //make different way for N == -1
     for(int i = 0; i < G; i++) evolve();
 
     cout << "\n\n" << N << " generation state:\n\n";
