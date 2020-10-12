@@ -22,7 +22,7 @@ bool get_next_state(int y, int x)
     else left = false;
     if (x == N - 1) right = true;
     else right = false;
-//qq
+//qq?
     if (!up)
     {
         neighbors += int(cells[y - 1][x]);
