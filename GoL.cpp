@@ -2,12 +2,26 @@
 #include <vector>
 #include <string>
 #include <ctime>
+#include <fstream>
 using namespace std;
 
 int N, G;
 bool stagnation = false;
 vector<vector<bool>> cells;
 
+
+void write_file()
+{
+    ofstream ofs("first.ppm", ios_base::out | ios_base::binary);
+    ofs << "P6" << endl << N << ' ' << N << endl << "255" << endl;
+
+    for (auto j = 0; j < N; ++j)
+        for (auto i = 0; i < N; ++i)
+            if(cells[j][i]) ofs << (char)(255) << (char)(255) << (char)(255);       // red, green, blue
+            else ofs << (char)(0) << (char)(0) << (char)(0);
+
+    ofs.close();
+}
 
 bool get_next_state(int y, int x)
 {
@@ -166,6 +180,9 @@ int main()
         cout << "0 generation state:\n";
         print();
         
+        write_file();
+        return 0;
+
         int i = 0;
         bool infinitive = (G == -1);
 
