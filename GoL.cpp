@@ -5,6 +5,8 @@
 #include <fstream>
 using namespace std;
 
+ofstream ofs("TheGameOfLife_PPM.ppm", ios_base::out | ios_base::binary);
+
 int N, G;
 bool stagnation = false;
 vector<vector<bool>> cells;
@@ -12,15 +14,12 @@ vector<vector<bool>> cells;
 
 void write_file()
 {
-    ofstream ofs("first.ppm", ios_base::out | ios_base::binary);
     ofs << "P6" << endl << N << ' ' << N << endl << "255" << endl;
 
     for (auto j = 0; j < N; ++j)
         for (auto i = 0; i < N; ++i)
             if(cells[j][i]) ofs << (char)(255) << (char)(255) << (char)(255);       // red, green, blue
             else ofs << (char)(0) << (char)(0) << (char)(0);
-
-    ofs.close();
 }
 
 bool get_next_state(int y, int x)
@@ -213,11 +212,13 @@ int main()
             print();
         }
 
+        ofs.close();
         return 1;
     }
     else
     {
         system("pause");
+        ofs.close();
         return 0;
     }
 
