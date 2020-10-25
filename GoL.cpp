@@ -9,6 +9,15 @@ bool stagnation = false;
 vector<vector<bool>> cells;
 
 
+class cell
+{
+private:
+    bool reduced_water_
+public:
+
+
+};
+
 bool get_next_state(int y, int x)
 {
     bool up, down, left, right;
