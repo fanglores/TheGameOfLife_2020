@@ -2,26 +2,37 @@
 #include <vector>
 #include <string>
 #include <ctime>
+#include <Windows.h>
 using namespace std;
 
 int N, G;
 bool stagnation = false;
 vector<vector<bool>> cells;
+vector<vector<bool>> water;
+HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
 
+//add genes mechanics
+//add water generation
+//how about of the cells movement?
+//rules for each generator
 
+const double mutation_chance = 0.4;
 class cell
 {
 private:
-    bool reduced_water_
+    bool reduced_water_need, strong, swimmer;
 public:
-
+    cell() {};
 
 };
 
-bool get_next_state(int y, int x)
+
+//c - proceeding cells
+//w - proceeding water
+bool get_next_state(int y, int x, vector<vector<bool>> &v, char c = 'c')
 {
     bool up, down, left, right;
-    int neighbors = 0;
+    int neighbors = 0, water_available = 0;
 
     if (y == 0) up = true;
     else up = false;
@@ -34,30 +45,68 @@ bool get_next_state(int y, int x)
 
     if (!up)
     {
-        neighbors += int(cells[y - 1][x]);
-        if (!left) neighbors += int(cells[y - 1][x - 1]);
-        if (!right) neighbors += int(cells[y - 1][x + 1]);
+        neighbors += int(v[y - 1][x]);
+        if (!left) neighbors += int(v[y - 1][x - 1]);
+        if (!right) neighbors += int(v[y - 1][x + 1]);
     }
     if (!down)
     {
-        neighbors += int(cells[y + 1][x]);
-        if (!left) neighbors += int(cells[y + 1][x - 1]);
-        if (!right) neighbors += int(cells[y + 1][x + 1]);
+        neighbors += int(v[y + 1][x]);
+        if (!left) neighbors += int(v[y + 1][x - 1]);
+        if (!right) neighbors += int(v[y + 1][x + 1]);
     }
-    if (!right) neighbors += int(cells[y][x + 1]);
-    if (!left) neighbors += int(cells[y][x - 1]);
+    if (!right) neighbors += int(v[y][x + 1]);
+    if (!left) neighbors += int(v[y][x - 1]);
 
-    if (cells[y][x])
+    if (c == 'c')
     {
-        if (neighbors >= 2 && neighbors <= 3) return true;    //alive cell keeps living
-        else return false;                       //alive cell dies
-    }
-    else
-    {
-        if (neighbors == 3) return true;                 //dead cell resurrected
-        else return false;                        //dead cell is dead
+        if (!up)
+        {
+            water_available += int(water[y - 1][x]);
+            if (!left) water_available += int(water[y - 1][x - 1]);
+            if (!right) water_available += int(water[y - 1][x + 1]);
+        }
+        if (!down)
+        {
+            water_available += int(water[y + 1][x]);
+            if (!left) water_available += int(water[y + 1][x - 1]);
+            if (!right) water_available += int(water[y + 1][x + 1]);
+        }
+        if (!right) water_available += int(water[y][x + 1]);
+        if (!left) water_available += int(water[y][x - 1]);
     }
 
+    if (c == 'c')
+    {
+        if (v[y][x])
+        {
+            if ((neighbors == 2 && water_available >= 3) || (neighbors == 3 && water_available >= 4)) return true;  //alive cell keeps living
+            else return false;  //alive cell dies
+        }
+        else
+        {
+            if (neighbors == 3 && water_available >= 4) return true;    //dead cell resurrected
+            else return false;  //dead cell is dead
+        }
+    }
+    else if(c == 'w')
+    {
+        if (neighbors <= 2) return false;  //water drains
+        if (neighbors == 3 && v[y][x]) return true;    //water stays
+        if (neighbors >= 4) return true;    //water appears
+    }
+}
+
+void evolve(vector<vector<bool>>& v, char c = 'c')
+{
+    vector<vector<bool>> sub(N, vector<bool>(N));
+
+    for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
+            sub[i][j] = get_next_state(i, j, v, c);
+
+    //stagnation = (v == sub);
+    v = sub;
 }
 
 bool auto_init()
@@ -85,7 +134,22 @@ bool auto_init()
             i++;
         }
     }
+    i = 0; n = N * N * 0.4; //0.4 was found as optimal coefficient
+    //cout << "water is " << n; //DEBUG
+    while (i < n)
+    {
+        x = rand() % N;
+        y = rand() % N;
 
+        if (water[y][x]) continue;
+        else
+        {
+            water[y][x] = true;
+            i++;
+        }
+    }
+
+    for (int i = 0; i < 50; i++) evolve(water, 'w');
     cout << "Initialization successful!\n";
     return true;
 }
@@ -110,18 +174,6 @@ bool manual_init()
     return true;
 }
 
-void evolve()
-{
-    vector<vector<bool>> sub(N, vector<bool>(N));
-
-    for (int i = 0; i < N; i++)
-        for (int j = 0; j < N; j++)
-            sub[i][j] = get_next_state(i, j);
- 
-    stagnation = (cells == sub);
-    cells = sub;
-}
-
 bool menu()
 {
     system("cls");
@@ -130,6 +182,7 @@ bool menu()
     cin >> N;
 
     cells.resize(N, vector<bool>(N, false));
+    water.resize(N, vector<bool>(N, false));
 
     cout << "\nEnter number of the generations (-1 for infinity):\n>>";
     cin >> G;
@@ -148,13 +201,14 @@ bool menu()
             system("cls");
         }
     }
+
 }
 
-void print()
+void print(vector<vector<bool>> &vect)
 {
     for (int i = 0; i < N; i++) cout << " _";
     cout << endl;
-    for (vector<bool> v : cells)
+    for (vector<bool> v : vect)
     {
         for (bool a : v)
             if (a) cout << "|*";
@@ -163,6 +217,36 @@ void print()
     }
 }
 
+void print_layers()
+{
+    /*for (int i = 0; i < N; i++) cout << " _ "; 
+    cout << "\t\t"; 
+    for (int i = 0; i < N; i++) cout << " _ "; 
+    cout << endl;*/
+    
+    for (int i = 0; i < N; i++)
+    {
+        for (int j = 0; j < N; j++)
+        {   
+            cout << "|";
+            if (cells[j][i]) { SetConsoleTextAttribute(hConsole, 10); cout << "*"; SetConsoleTextAttribute(hConsole, 7); }
+            else { SetConsoleTextAttribute(hConsole, 4); cout << "X"; SetConsoleTextAttribute(hConsole, 7); }
+            cout << "|";
+        }
+
+        cout << "\t\t";
+
+        for (int j = 0; j < N; j++)
+        {
+            cout << "|";
+            if (water[j][i]) { SetConsoleTextAttribute(hConsole, 11); cout << "w"; SetConsoleTextAttribute(hConsole, 7); }
+            else { SetConsoleTextAttribute(hConsole, 4); cout << "_"; SetConsoleTextAttribute(hConsole, 7); }
+            cout << "|";
+        }
+
+        cout << endl;
+    }
+}
 
 int main()
 {
@@ -173,7 +257,7 @@ int main()
         system("cls");
 
         cout << "0 generation state:\n";
-        print();
+        print_layers();
         
         int i = 0;
         bool infinitive = (G == -1);
@@ -182,27 +266,27 @@ int main()
         {
             while (i < G && !stagnation)
             {
-                evolve();
+                evolve(cells);
                 i++;
             }
             cout << "\n\n" << N << "th generation state:\n";
-            print();
+            print_layers();
         }
         else 
             while (!stagnation)
             {
                 system("pause");
-                evolve();
+                evolve(cells);
                 i++;
                 cout << "\n" << i << " generation state:\n";
-                print();
+                print_layers();
             }
 
         if (stagnation)
         {
             cout << "\n$Found end of the world`s evolution!";
             cout << "\n" << i << "th generation state:\n";
-            print();
+            print_layers();
         }
 
         return 1;
