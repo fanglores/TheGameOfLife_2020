@@ -5,6 +5,8 @@
 #include <Windows.h>
 using namespace std;
 
+const bool DEBUG = true;    //set true if in dev
+
 int N, G;
 bool stagnation = false;
 vector<vector<bool>> cells;
@@ -105,22 +107,26 @@ void evolve(vector<vector<bool>>& v, char c = 'c')
         for (int j = 0; j < N; j++)
             sub[i][j] = get_next_state(i, j, v, c);
 
-    //stagnation = (v == sub);
+    if(c == 'c') stagnation = (v == sub);
     v = sub;
 }
 
 bool auto_init()
 {
     int n, i = 0, x, y;
-    system("cls");
     srand(time(0));
-    cout << "*************************AUTO_INIT*************************\n\n";
+    if (!DEBUG)
+    {
+        system("cls"); 
+        cout << "*************************AUTO_INIT*************************\n\n";
 
-    cout << "Enter number of cells to init (-1 for automatical generation):\n>>";
-    cin >> n;
+        cout << "Enter number of cells to init (-1 for automatical generation):\n>>";
+        cin >> n;
 
-    if (n == -1) n = N * N / 3 + N % 3;
-    cout << "\n$Initializing " << n << " cells...\n\n";
+        if (n == -1) n = N * N / 3 + N % 3;
+        cout << "\n$Initializing " << n << " cells...\n\n";
+    }
+    else n = N * N / 3 + N % 3;
 
     while (i < n)
     {
@@ -178,6 +184,15 @@ bool menu()
 {
     system("cls");
     string ans;
+
+    if (DEBUG) 
+    { 
+        N = 10; G = -1;
+        cells.resize(N, vector<bool>(N, false));
+        water.resize(N, vector<bool>(N, false)); 
+        return auto_init(); 
+    }
+
     cout << "Enter size of the test field:\n>>";
     cin >> N;
 
@@ -253,7 +268,7 @@ int main()
 
     if (menu())          //init
     {
-        system("pause");
+        if(!DEBUG) system("pause");
         system("cls");
 
         cout << "0 generation state:\n";
